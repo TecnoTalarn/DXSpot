@@ -1,0 +1,14 @@
+# Byte-compiled
+__pycache__/
+*.pyc
+
+# Log files
+*.adi
+*.adif
+
+# Generated data
+dxcc_prefixes.json
+cty.dat
+
+# OS
+.DS_Store
