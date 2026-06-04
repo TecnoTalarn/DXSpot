@@ -105,7 +105,7 @@ SPOT_RE = re.compile(r"^DX\s+de\s+(\S+):\s+([0-9.]+)\s+([A-Z0-9/]+)(.*)", re.IGN
 # Worked sets
 worked_chart_codes = set()    # set of DXCC entity codes (lifetime, from Club Log)
 worked_2026_codes = set()     # set of DXCC entity codes (2026, from ADIF)
-FILTER_YEAR = "2026"          # Any de referència per al filtre
+FILTER_YEAR = None  # es resol des de --year al main()
 UNMATCHED_WORKED_NAMES = set()  # entity names in ADIF that weren't in entity_codes.json
 
 last_alert_time = {}   # (entity_code,) -> timestamp
@@ -659,6 +659,7 @@ def adif_refresh_loop():
 
 if __name__ == "__main__":
     ARGS = parse_args()
+    FILTER_YEAR = str(ARGS.year)
     callsign_display = ARGS.callsign.upper()
     print(f"{'='*60}")
     print(f"  DXCC Club Log Monitor — {callsign_display}")
