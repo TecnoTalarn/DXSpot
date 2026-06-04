@@ -190,13 +190,14 @@ systemctl daemon-reload && systemctl enable --now dxspot
 
 ```
 DXSpot/
-├── dxcc_clublog_v2.py   # Monitor principal (recomanat)
-├── dxcc_clublog.py      # Versió anterior
-├── dxcc_monitor.py      # Versió original (només cluster)
-├── parse_cty.py         # Genera el mapa de prefixos
-├── requirements.txt     # Dependències Python
-├── README.md            # Aquest fitxer
-└── .gitignore           # Exclou dades sensibles
+├── dxcc_clublog_v2.py      # Monitor principal (recomanat)
+├── dxcc_clublog_v2.bat     # Windows launcher (comprova Python + deps)
+├── dxcc_clublog.py         # Versió anterior
+├── dxcc_monitor.py         # Versió original (només cluster)
+├── parse_cty.py            # Genera el mapa de prefixos
+├── requirements.txt        # Dependències Python
+├── README.md               # Aquest fitxer
+└── .gitignore              # Exclou dades sensibles
 ```
 
 ---
@@ -386,13 +387,14 @@ systemctl daemon-reload && systemctl enable --now dxspot
 
 ```
 DXSpot/
-├── dxcc_clublog_v2.py   # Main monitor (recommended)
-├── dxcc_clublog.py      # Previous version
-├── dxcc_monitor.py      # Original version (cluster only)
-├── parse_cty.py         # Prefix map generator
-├── requirements.txt     # Python dependencies
-├── README.md            # This file
-└── .gitignore           # Excludes sensitive data
+├── dxcc_clublog_v2.py      # Main monitor (recommended)
+├── dxcc_clublog_v2.bat     # Windows launcher (checks Python + deps)
+├── dxcc_clublog.py         # Previous version
+├── dxcc_monitor.py         # Original version (cluster only)
+├── parse_cty.py            # Prefix map generator
+├── requirements.txt        # Python dependencies
+├── README.md               # This file
+└── .gitignore              # Excludes sensitive data
 ```
 
 ---
