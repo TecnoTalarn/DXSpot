@@ -420,6 +420,24 @@ def cluster_loop():
                 s.settimeout(120)
                 s.connect((ARGS.cluster_host, ARGS.cluster_port))
                 s.sendall(f"{ARGS.callsign}\n".encode())
+                # Login DXSpider (obligatori per rebre spots)
+                time.sleep(1)
+                s.sendall(b"set/name Monitor\n")
+                time.sleep(0.5)
+                s.sendall(b"set/qth Lleida\n")
+                time.sleep(0.5)
+                s.sendall(b"set/qra JN01\n")
+                time.sleep(0.5)
+                s.sendall(b"set/homenode none\n")
+                # Drenar buffer de login
+                s.settimeout(2)
+                try:
+                    while True:
+                        d = s.recv(65536)
+                        if not d: break
+                except socket.timeout:
+                    pass
+                s.settimeout(120)
                 buffer = ""
                 while True:
                     data = s.recv(4096)

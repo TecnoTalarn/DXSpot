@@ -1,14 +1,11 @@
-# Byte-compiled
-__pycache__/
-*.pyc
-
-# Log files
+# Credencials i dades sensibles
+*.plist
 *.adi
-*.adif
-
-# Generated data
+clublog_dxcc_chart.json
+entity_codes.json
 dxcc_prefixes.json
 cty.dat
 
-# OS
-.DS_Store
+# Temporals
+__pycache__/
+*.pyc
