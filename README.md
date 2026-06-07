@@ -18,6 +18,12 @@ Monitoritza spots en temps real des d'un DX Cluster, compara'ls amb el teu DXCC 
 - **Alertes Telegram** — notificacions configurables amb dos nivells:
   - 🚨 **Mai treballada** (24/7)
   - 🌅 **NO treballada l'any en curs** (només en horari diürn)
+- **Alertes Telegram** — tres nivells:
+  - 🚨 **Mai treballada** (24/7)
+  - 🌅 **NO treballada l'any en curs** (horari diürn)
+  - 💤 **NO confirmada l'any en curs** (horari diürn, només amb )
+- **** — flag opcional per activar alertes d'entitats treballades però encara no confirmades
+- **Confirmades l'any en curs** — completament silenciades
 - **Deduplicació** — control de re-alertes amb interval configurable (2h per defecte)
 - **QSY detection** — si el mateix prefix apareix a una freqüència diferent, re-alerta amb "QSY! era X kHz"
 - **Silenci nocturn configurable** — les entitats ja treballades (però no aquest any) només alerten de dia
@@ -45,7 +51,7 @@ pip install requests
 python3 parse_cty.py        # genera dxcc_prefixes.json
 
 # Configuració inicial
-python3 dxcc_clublog_v3.py \
+python3 dxcc_clublog_v4.py \
     --callsign TEUCALL \
     --clublog-api-key TEU_CLUBLOG_API_KEY \
     --clublog-email TEU_EMAIL \
@@ -85,15 +91,16 @@ python3 dxcc_clublog_v3.py \
 - **SSB, FT4, RTTY, MFSK**: controlats per `--modes`. Alerta si el combo (any, mode, entitat) no és al teu chart.
 - **Altres modes**: si no es detecta cap mode conegut, es mostra en blanc (sense mode).
 
-### Sistema d'alertes (Two-Tier)
+### Sistema d'alertes (Four-Tier)
 
-El sistema compara cada spot amb dues fonts (Club Log lifetime chart + Club Log any actual):
+El sistema compara cada spot amb tres fonts (Club Log lifetime chart + Club Log any actual treballat + Club Log any actual confirmat):
 
-| Nivell | Condició | Quan alerta |
-|--------|----------|-------------|
-| 🚨 **Mai treballada** | No és al teu Club Log Chart (lifetime) | **24/7** |
-| 🌅 **NO a l'any** | Treballada abans però no aquest any | **silence_start - silence_end** |
-| ✅ Ja treballada | Al Club Log Chart de l'any en curs | Silenci |
+| Nivell | Condició | `--no-confirmed-only=OFF` | `--no-confirmed-only=ON` |
+|--------|----------|:---:|:---:|
+| 🚨 **Mai treballada** | No és al teu Club Log Chart (lifetime) | **24/7** | **24/7** |
+| 🌅 **NO a l'any** | Treballada abans però no aquest any | **⏰ horari** | **⏰ horari** |
+| 💤 **No confirmada** | Treballada l'any en curs, sense QSL | ❌ silenci | **⏰ horari** |
+| ✅ Ja confirmada | Confirmada l'any en curs | ❌ silenci | ❌ silenci |
 
 Les re-alertes (mateixa entitat, diferent freqüència) mostren "Nou avís, fa X min" o "QSY! era Y kHz" segons correspongui.
 
@@ -106,7 +113,7 @@ Les re-alertes (mateixa entitat, diferent freqüència) mostren "Nou avís, fa X
 ### Exemple d'execució
 
 ```bash
-python3 dxcc_clublog_v3.py \
+python3 dxcc_clublog_v4.py \
     --callsign EB3AM \
     --cluster-login EB3AM \
     --clublog-api-key "TEU_API_KEY" \
@@ -132,7 +139,7 @@ python3 dxcc_clublog_v3.py \
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/python3</string>
-        <string>/ruta/a/dxcc_clublog_v3.py</string>
+        <string>/ruta/a/dxcc_clublog_v4.py</string>
         <string>--callsign</string>
         <string>TEUCALL</string>
         <string>--clublog-api-key</string>
@@ -170,7 +177,7 @@ Description=DXSpot DXCC Monitor
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /ruta/a/dxcc_clublog_v3.py --callsign TEUCALL --clublog-api-key KEY --clublog-email EMAIL --clublog-password PASS --telegram-token TOKEN --telegram-chat-id ID --silence-start 3 --silence-end 8
+ExecStart=/usr/bin/python3 /ruta/a/dxcc_clublog_v4.py --callsign TEUCALL --clublog-api-key KEY --clublog-email EMAIL --clublog-password PASS --telegram-token TOKEN --telegram-chat-id ID --silence-start 3 --silence-end 8
 Restart=always
 RestartSec=10
 User=TEU_USUARI
@@ -200,7 +207,7 @@ systemctl daemon-reload && systemctl enable --now dxspot
 
 ```
 DXSpot/
-├── dxcc_clublog_v3.py      # Monitor principal (recomanat)
+├── dxcc_clublog_v4.py      # Monitor principal (recomanat)
 ├── dxcc_clublog_v3.bat     # Windows launcher
 ├── dxcc_clublog_v2.py      # Versió anterior (amb eQSL/ADIF)
 ├── dxcc_clublog_v2.bat     # Windows launcher v2
@@ -254,7 +261,7 @@ pip install requests
 python3 parse_cty.py        # generates dxcc_prefixes.json
 
 # Initial setup
-python3 dxcc_clublog_v3.py \
+python3 dxcc_clublog_v4.py \
     --callsign YOURCALL \
     --clublog-api-key YOUR_CLUBLOG_API_KEY \
     --clublog-email YOUR_EMAIL \
@@ -290,7 +297,7 @@ python3 dxcc_clublog_v3.py \
 ### Example
 
 ```bash
-python3 dxcc_clublog_v3.py \
+python3 dxcc_clublog_v4.py \
     --callsign EB3AM \
     --cluster-login EB3AM \
     --clublog-api-key "YOUR_API_KEY" \
@@ -316,7 +323,7 @@ python3 dxcc_clublog_v3.py \
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/python3</string>
-        <string>/path/to/dxcc_clublog_v3.py</string>
+        <string>/path/to/dxcc_clublog_v4.py</string>
         <string>--callsign</string>
         <string>YOURCALL</string>
         <string>--clublog-api-key</string>
@@ -353,7 +360,7 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.yourcall.dxspot.plis
 
 ```
 DXSpot/
-├── dxcc_clublog_v3.py      # Main monitor (recommended)
+├── dxcc_clublog_v4.py      # Main monitor (recommended)
 ├── dxcc_clublog_v3.bat     # Windows launcher v3
 ├── dxcc_clublog_v2.py      # Previous version (with eQSL/ADIF)
 ├── dxcc_clublog_v2.bat     # Windows launcher v2
