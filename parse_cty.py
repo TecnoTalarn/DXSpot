@@ -18,40 +18,12 @@ def download():
     urllib.request.urlretrieve(CTY_URL, CTY_PATH)
     print("OK")
 
-# Entitats sub-regionals que NO són DXCC individuals (es normalitzen al seu pare)
-# Font: ARRL DXCC Current Entities (340 entitats vàlides)
+# Entitats sub-regionals que NO tenen codi DXCC propi als entity codes de Club Log.
+# Es resolen via ENTITY_NAME_ALIASES al monitor.
 REGION_MAP = {
-    # Estats Units
-    "Alaska": "United States",
-    "Hawaii": "United States",
-    # Regne Unit
-    "England": "United Kingdom",
-    "Scotland": "United Kingdom",
-    "Wales": "United Kingdom",
-    "Northern Ireland": "United Kingdom",
-    "Shetland Islands": "United Kingdom",
-    # Rússia
-    "European Russia": "Russia",
-    "Asiatic Russia": "Russia",
-    "Kaliningrad": "Russia",
-    # Turquia
-    "European Turkey": "Turkey",
+    "Shetland Islands": "Scotland",  # sense code propi, sub-regió d'Escòcia
+    "European Turkey": "Turkey",      # sense code propi, part de Turquia
     "Asiatic Turkey": "Turkey",
-    # Malàisia
-    "East Malaysia": "Malaysia",
-    "West Malaysia": "Malaysia",
-    # Itàlia
-    "Sicily": "Italy",
-    "Sardinia": "Italy",
-    # Grècia
-    "Crete": "Greece",
-    "Dodecanese": "Greece",
-    # França
-    "Corsica": "France",
-    # Espanya
-    "Balearic Islands": "Spain",
-    "Canary Islands": "Spain",
-    "Ceuta & Melilla": "Spain",
 }
 
 # Entitats a EXCLOURE del compte DXCC
@@ -60,7 +32,6 @@ DELETED_ENTITIES = {
     "African Italy",      # NO era una entitat DXCC (era un modifier sota Italy)
     "Bear Island",        # Part de Svalbard (JW), no entitat ARRL separada
     "Shetland Islands",   # Part d'Escòcia (GM), no entitat ARRL separada
-    "Sicily",             # Part d'Itàlia (IT9), no entitat ARRL separada
     "Vienna Intl Ctr",    # NO reconeguda al llistat ARRL 2022
 }
 
@@ -150,12 +121,18 @@ def parse():
     MANUAL_FIXES = {
         "IG9": "Italy",   # African Italy — no és entitat DXCC separada
         "IH9": "Italy",   # African Italy — no és entitat DXCC separada
+        "IQ9": "Italy",   # Indicatius temporals/events italians
+        "IR9": "Italy",   # Indicatius temporals/events italians
     }
     for prefix, entity in MANUAL_FIXES.items():
         if prefix in mapping:
             old = mapping[prefix]
             mapping[prefix] = entity
             print(f"  ⚠ {prefix}: {old} -> {entity} (correcció manual)")
+
+    # Correccions manuals — override per a prefixes que cty.dat assigna
+    # a entitats NO vàlides com a DXCC, o errors coneguts.
+    MANUAL_FIXES = {}
 
     # Correccions d'indicatius complets — override de cty.dat erroni
     MANUAL_CALLSIGN_FIXES = {

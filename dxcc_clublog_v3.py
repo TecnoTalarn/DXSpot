@@ -219,13 +219,33 @@ def load_entity_codes():
     return True
 
 
+# Alias per a noms d'entitat que no existeixen directament als entity codes
+# (noms del cty.dat que no apareixen al llistat DXCC de Club Log)
+ENTITY_NAME_ALIASES = {
+    "UNITED KINGDOM": "GREAT BRITAIN",   # cty.dat: England/Scotland/Wales/Ireland, però de vegades UK
+    "RUSSIA": "EUROPEAN RUSSIA",         # cty.dat no separa Eur/As, premem Western Russia
+    "MALAYSIA": "WEST MALAYSIA",         # cty.dat sense separar, premem Peninsular
+    "SICILY": "ITALY",                   # Part d'Itàlia, sense code DXCC propi
+    "EUROPEAN TURKEY": "TURKEY",        # Part de Turquia, sense code propi
+    "ASIATIC TURKEY": "TURKEY",
+    "SHETLAND ISLANDS": "SCOTLAND",     # Part d'Escòcia, sense code propi
+}
+
 def entity_to_code(entity_name):
     """Convert entity name (from prefix map) to DXCC code.
     Returns string code or None (str for consistent set comparisons).
+    First tries direct lookup, then falls back to entity name aliases.
     """
-    code = entity_codes.get(entity_name.upper())
+    upper = entity_name.upper()
+    code = entity_codes.get(upper)
     if code is not None:
         return str(code)
+    # Fallback: alias per noms que no estan als entity codes directament
+    alias = ENTITY_NAME_ALIASES.get(upper)
+    if alias:
+        code = entity_codes.get(alias)
+        if code is not None:
+            return str(code)
     return None
 
 
