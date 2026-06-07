@@ -93,9 +93,10 @@ CHART_CACHE = os.path.join(WORKSPACE, "clublog_dxcc_chart.json")
 # ===================== QUIET HOURS =====================
 
 def is_daytime():
-    """Returns True durant les hores d'alerta (fora de silenci).
-    Per defecte alerta de 07:00 a 23:00, silenci de 23:00 a 07:00.
-    Configurable amb --silence-start i --silence-end."""
+    """Returns True si és hora de SILENCI (no alertar).
+    Per defecte silenci de 23:00 a 07:00, alerta de 07:00 a 23:00.
+    Configurable amb --silence-start i --silence-end.
+    NOTA: El nom és enganyós, retorna True = silenci, False = alerta."""
     now = datetime.now()
     current = now.hour * 60 + now.minute
     start = ARGS.silence_start * 60
@@ -504,14 +505,14 @@ def process_spot(line):
         # Opció 2: Treballat 2026, NO confirmat
         if not ARGS.no_confirmed_only:
             return  # --no-confirmed-only=OFF, no avisem treballats 2026
-        if not is_daytime():
-            return  # Fora d'horari
+        if is_daytime():
+            return  # Hora de silenci
     else:
         # Opció 3: No treballat el 2026 (però treballat en anys anteriors)
         if ARGS.no_confirmed_only:
             return  # --no-confirmed-only=ON, no avisem no treballats 2026
-        if not is_daytime():
-            return  # Fora d'horari
+        if is_daytime():
+            return  # Hora de silenci
 
     # === ALERT ===
     now = time.time()
