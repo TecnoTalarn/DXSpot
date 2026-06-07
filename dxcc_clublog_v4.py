@@ -545,7 +545,7 @@ def process_spot(line):
     else:
         # Treballat 2026 NO confirmat
         if ARGS.no_confirmed_only:
-            alert_type = f"🌅 NOU el {FILTER_YEAR} (NO CONFIRMAT)"
+            alert_type = f"💤 NO CONFIRMAT el {FILTER_YEAR}"
             prefix = "🌅"
         else:
             # No hauria de passar mai perquè si hem arribat aquí és que l'opció 3 està activa
