@@ -3,7 +3,7 @@
 dxcc_clublog_v4.py — DXCC Monitor via Club Log (sense eQSL)
 Basat en dxcc_monitor.py (connexió cluster provada i funcional)
 Afegit: Club Log chart per any (date=3), sense dependència d'eQSL/ADIF.
-Afegit: Flag --alert-no-confirmed per triar avisos d'horari.
+Afegit: Flag --no-confirmed-only per triar avisos d'horari (default OFF, com v3)
 
 Usage:
     python3 dxcc_clublog_v2.py --callsign EB3AM --cluster-login EB3AM-9 \\
@@ -53,9 +53,9 @@ def parse_args():
     parser.add_argument("--clublog-password", default=None,
                         help="Club Log password (for dxcc chart)")
     # --adif i --eqsl eliminats, es fa servir ClubLog date=3
-    parser.add_argument("--alert-no-confirmed", action="store_true", default=True,
-                        help="Alertar en horari per treballats 2026 NO confirmats (default: ON). "
-                             "Si OFF, alerta per NO treballats el 2026.")
+    parser.add_argument("--no-confirmed-only", action="store_true", default=False,
+                        help="Alertar NOMES treballats 2026 NO confirmats (exclou no treballats 2026). "
+                             "Per defecte OFF: alerta per NO treballats el 2026 (comportament v3).")
     # Silence hours (per defecte 23:00 - 07:00, fora d'aquest rang s'alerta)
     parser.add_argument("--silence-start", type=int, default=23,
                         help="Hour when silence starts (default: 23 = 23:00)")
@@ -502,14 +502,14 @@ def process_spot(line):
         pass  # alert below
     elif in_2026:
         # Opció 2: Treballat 2026, NO confirmat
-        if not ARGS.alert_no_confirmed:
-            return  # --alert-no-confirmed=OFF, no avisem treballats 2026
+        if not ARGS.no_confirmed_only:
+            return  # --no-confirmed-only=OFF, no avisem treballats 2026
         if not is_daytime():
             return  # Fora d'horari
     else:
         # Opció 3: No treballat el 2026 (però treballat en anys anteriors)
-        if ARGS.alert_no_confirmed:
-            return  # --alert-no-confirmed=ON, no avisem no treballats 2026
+        if ARGS.no_confirmed_only:
+            return  # --no-confirmed-only=ON, no avisem no treballats 2026
         if not is_daytime():
             return  # Fora d'horari
 
@@ -667,7 +667,7 @@ if __name__ == "__main__":
     print(f"  DXCC Club Log Monitor — {callsign_display}")
     print(f"  Modes: {ARGS.modes}  Freq: {ARGS.freq_min}-{ARGS.freq_max} kHz")
     print(f"  Alerta 24/7: entitats MAI treballades")
-    if ARGS.alert_no_confirmed:
+    if ARGS.no_confirmed_only:
         print(f"  Alerta horari: treballades {FILTER_YEAR} NO confirmades")
     else:
         print(f"  Alerta horari: NO treballades el {FILTER_YEAR} (treballades anys ant.)")
