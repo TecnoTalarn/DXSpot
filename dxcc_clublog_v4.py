@@ -488,7 +488,7 @@ def process_spot(line):
             print(f"⚠️ No s'ha pogut resoldre {dx_call} → {entity} (sense codi DXCC)")
             return
 
-    # === THREE-TIER ALERTING ===
+    # === FOUR-TIER ALERTING ===
     in_chart = code in worked_chart_codes      # Worked ever?
     in_2026 = code in worked_2026_codes         # Worked this year?
     confirmed_2026 = code in confirmed_2026_codes  # Confirmed this year?
@@ -501,16 +501,14 @@ def process_spot(line):
     if is_never:
         # Opció 1: Mai treballat → alerta 24/7
         pass  # alert below
-    elif in_2026:
-        # Opció 2: Treballat 2026, NO confirmat
-        if not ARGS.no_confirmed_only:
-            return  # --no-confirmed-only=OFF, no avisem treballats 2026
+    elif not in_2026:
+        # Opció 2: No treballat el 2026 (però treballat en anys anteriors)
         if is_daytime():
             return  # Hora de silenci
     else:
-        # Opció 3: No treballat el 2026 (però treballat en anys anteriors)
-        if ARGS.no_confirmed_only:
-            return  # --no-confirmed-only=ON, no avisem no treballats 2026
+        # Opció 3: Treballat 2026 NO confirmat
+        if not ARGS.no_confirmed_only:
+            return  # Flag OFF, no avisem
         if is_daytime():
             return  # Hora de silenci
 
@@ -541,12 +539,18 @@ def process_spot(line):
     if is_never:
         alert_type = "🚨 MAI TREBALLAT"
         prefix = "🚨"
-    elif in_2026:
-        alert_type = f"🌅 NOU el {FILTER_YEAR} (NO CONFIRMAT)"
+    elif not in_2026:
+        alert_type = f"🌅 NOU el {FILTER_YEAR}"
         prefix = "🌅"
     else:
-        alert_type = f"🌅 NOU el {FILTER_YEAR} (TREBALLAT ANYS ANT.)"
-        prefix = "🌅"
+        # Treballat 2026 NO confirmat
+        if ARGS.no_confirmed_only:
+            alert_type = f"🌅 NOU el {FILTER_YEAR} (NO CONFIRMAT)"
+            prefix = "🌅"
+        else:
+            # No hauria de passar mai perquè si hem arribat aquí és que l'opció 3 està activa
+            alert_type = f"🌅 NOU el {FILTER_YEAR}"
+            prefix = "🌅"
 
     mode_display = f" | {mode}" if mode != "UNKNOWN" else ""
     msg = (
