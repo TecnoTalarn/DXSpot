@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-dxcc_clublog_v2.py — DXCC Monitor via Club Log (sense eQSL/ADIF)
+dxcc_clublog_v2.2.py — DXCC Monitor via Club Log (sense eQSL/ADIF)
 Basat en dxcc_monitor.py (connexió cluster provada i funcional)
-Afegit: Club Log chart, two-tier alerting, entity codes.
+Afegit: Club Log chart, two-tier alerting, silence configurable.
 
 Usage:
-    python3 dxcc_clublog_v2.py --callsign EB3AM --cluster-login EB3AM-9 \\
+    python3 dxcc_clublog_v2.2.py --callsign EB3AM --cluster-login EB3AM-9 \\
         --clublog-api-key KEY --clublog-email EMAIL --clublog-password PASS \\
-        --adif /path/to/logbook.adi --telegram-token TOKEN --telegram-chat-id ID
+        --telegram-token TOKEN --telegram-chat-id ID
 """
 
 import socket
@@ -19,7 +19,7 @@ import argparse
 import requests
 import threading
 import subprocess
-import adif_io
+# import adif_io (ja no cal)
 from datetime import datetime
 
 # ===================== CONFIGURATION =====================
@@ -44,18 +44,18 @@ def parse_args():
     parser.add_argument("--freq-max", type=float, default=55000,
                         help="Max frequency in kHz (default: 55000 ~6m)")
     # Club Log
-    parser.add_argument("--eqsl-user", default=None,
-                        help="eQSL username (for ADIF download)")
-    parser.add_argument("--eqsl-pass", default=None,
-                        help="eQSL password (for ADIF download)")
     parser.add_argument("--clublog-api-key", default=None,
                         help="Club Log API key")
     parser.add_argument("--clublog-email", default=None,
                         help="Club Log email (for dxcc chart)")
     parser.add_argument("--clublog-password", default=None,
                         help="Club Log password (for dxcc chart)")
-    parser.add_argument("--adif", default=None,
-                        help="Path to logbook.adi (for 2026 worked entities)")
+    # parser.add_argument("--adif"...) — eliminat, es fa servir ClubLog date=3
+    # Silence hours (per defecte 23:00 - 07:00, fora d'aquest rang s'alerta)
+    parser.add_argument("--silence-start", type=int, default=23,
+                        help="Hour when silence starts (default: 23 = 23:00)")
+    parser.add_argument("--silence-end", type=int, default=7,
+                        help="Hour when silence ends (default: 7 = 07:00)")
     # Connections
     parser.add_argument("--telegram-token", default=None,
                         help="Telegram Bot API token")
@@ -83,19 +83,25 @@ ARGS = None
 PREFIX_FILE = os.path.join(WORKSPACE, "dxcc_prefixes.json")
 ENTITY_CODES_FILE = os.path.join(WORKSPACE, "entity_codes.json")
 CHART_CACHE = os.path.join(WORKSPACE, "clublog_dxcc_chart.json")
-ADIF_FILE = None  # es resol en main()
+# ADIF_FILE — eliminat
 
 # ===================== QUIET HOURS =====================
 
 def is_daytime():
-    """Returns True during 00:00-07:00 local time (silence 00:00-07:00)."""
+    """Returns True durant les hores d'alerta (fora de silenci).
+    Per defecte alerta de 07:00 a 23:00, silenci de 23:00 a 07:00.
+    Configurable amb --silence-start i --silence-end."""
     now = datetime.now()
     current = now.hour * 60 + now.minute
-    end = 7 * 60      # 07:00
-    start = 0 * 60      # 00:00
-    if start <= current < end:
-        return True
-    return False
+    start = ARGS.silence_start * 60
+    end = ARGS.silence_end * 60
+    # Si silence_start > silence_end (ex: 23->7), creua mitjanit
+    if start < end:
+        # rang dins del mateix dia (ex: 0-7, alerta 7-0)
+        return start <= current < end
+    else:
+        # rang creua mitjanit (ex: 23-7, silenci nocturn)
+        return current >= start or current < end
 
 # ===================== INIT =====================
 
@@ -285,54 +291,42 @@ def clublog_download_chart():
 
 # ===================== eQSL ADIF DOWNLOAD =====================
 
-def download_adif_from_eqsl():
-    """Descarrega el LOG COMPLET d'eQSL (OutBox - QSOs pujats per l'usuari)."""
-    import html.parser
-
-    class LinkExtractor(html.parser.HTMLParser):
-        def __init__(self):
-            super().__init__()
-            self.adif_url = None
-        def handle_starttag(self, tag, attrs):
-            if tag == "a":
-                attrs_dict = dict(attrs)
-                href = attrs_dict.get("href", "")
-                if href.endswith(".adi"):
-                    self.adif_url = href
-
-    if not ARGS.eqsl_user or not ARGS.eqsl_pass:
-        print("eQSL credentials not configured")
-        return False
-
-    # Pas 1: obtenir pàgina amb enllaços
-    url_api = f"https://www.eqsl.cc/qslcard/DownloadADIF.cfm?UserName={ARGS.eqsl_user}&Password={ARGS.eqsl_pass}&HamOnly=1"
+def clublog_load_year_chart(year):
+    """Descarrega el DXCC chart de ClubLog per the l'any actual (date=3).
+    Retorna set de codis DXCC treballats aquell any."""
+    global worked_2026_codes
+    if not ARGS.clublog_email or not ARGS.clublog_password or not ARGS.clublog_api_key:
+        print("Club Log credentials not configured")
+        return set()
+    url = "https://clublog.org/json_dxccchart.php"
+    params = {
+        "call": ARGS.callsign,
+        "api": ARGS.clublog_api_key,
+        "email": ARGS.clublog_email,
+        "password": ARGS.clublog_password,
+        "mode": 0,
+        "date": 3,
+    }
     try:
-        r = requests.get(url_api, timeout=60)
+        r = requests.get(url, params=params, timeout=30)
         r.raise_for_status()
-        parser = LinkExtractor()
-        parser.feed(r.text)
-        if not parser.adif_url:
-            print("No s'ha trobat enllaç ADIF a la resposta d'eQSL")
-            return False
-        if parser.adif_url.startswith("../"):
-            parser.adif_url = "https://www.eqsl.cc/" + parser.adif_url[3:]
-        print(f"Enllaç ADIF: {parser.adif_url}")
+        data = r.json()
+        codes = set()
+        for code_str, bands in data.items():
+            if isinstance(bands, dict):
+                for band, status in bands.items():
+                    if status in (1, 2, 3, True):
+                        try:
+                            codes.add(str(int(code_str)))
+                        except ValueError:
+                            pass
+                        break
+        worked_2026_codes = codes
+        print(f"📡 Club Log chart {year}: {len(codes)} entitats")
+        return codes
     except Exception as e:
-        print(f"Error obtenint enllaç ADIF: {e}")
-        return False
-
-    # Pas 2: descarregar el fitxer ADIF
-    try:
-        r2 = requests.get(parser.adif_url, timeout=60)
-        r2.raise_for_status()
-        clean = r2.content.decode("utf-8", errors="replace").encode("utf-8", errors="replace")
-        with open(os.path.abspath(ARGS.adif), "wb") as f:
-            f.write(clean)
-        print(f"ADIF descarregat ({len(clean)} bytes)")
-        return True
-    except Exception as e:
-        print(f"Error descarregant ADIF: {e}")
-        return False
+        print(f"Club Log chart error ({year}): {e}")
+        return set()
 
 
 def clublog_lookup_api(call):
@@ -352,45 +346,9 @@ def clublog_lookup_api(call):
 
 # ===================== ADIF 2026 =====================
 
-def load_adif_2026(adif_path):
-    """Load ADIF file and extract DXCC entities worked in 2026."""
-    global worked_2026_codes, UNMATCHED_WORKED_NAMES
-    if not adif_path or not os.path.exists(adif_path):
-        print(f"ADIF not found: {adif_path}")
-        return False
-    try:
-        with open(adif_path, "rb") as f:
-            raw = f.read()
-        text = raw.decode("utf-8", errors="replace")
-        qsos, _ = adif_io.read_from_string(text)
-    except Exception as e:
-        print(f"Error parsing ADIF: {e}")
-        return False
-
-    worked_2026_codes.clear()
-    UNMATCHED_WORKED_NAMES.clear()
-    count = 0
-    for qso in qsos:
-        date = qso.get("QSO_DATE", "")
-        year = date[:4] if len(date) >= 4 else ""
-        if year != FILTER_YEAR:
-            continue
-        call = qso.get("CALL", "").upper()
-        if not call:
-            continue
-        entity = lookup_entity(call)
-        if entity and entity != "UNKNOWN":
-            code = entity_to_code(entity)
-            if code:
-                worked_2026_codes.add(code)
-            else:
-                UNMATCHED_WORKED_NAMES.add(entity)
-        count += 1
-
-    print(f"📄 ADIF {FILTER_YEAR}: {count} QSOs, {len(worked_2026_codes)} entitats")
-    if UNMATCHED_WORKED_NAMES:
-        print(f"⚠️  {len(UNMATCHED_WORKED_NAMES)} entitats sense codi DXCC")
-    return True
+def load_year_chart_from_clublog():
+    """Carrega el chart de ClubLog per l'any actual."""
+    clublog_load_year_chart(ARGS.year)
 
 
 # ===================== MODE GUESSING =====================
@@ -644,14 +602,11 @@ def cty_refresh_loop():
         time.sleep(86400)
 
 
-def adif_refresh_loop():
-    """Downloads fresh ADIF from eQSL every 24h."""
+def year_chart_refresh_loop():
+    """Refresca el chart de ClubLog cada 24h."""
     while True:
-        if ARGS.eqsl_user and ARGS.eqsl_pass:
-            download_adif_from_eqsl()
-            if ARGS.adif:
-                load_adif_2026(os.path.abspath(ARGS.adif))
-            rebuild_worked_sets()
+        clublog_load_year_chart(ARGS.year)
+        rebuild_worked_sets()
         time.sleep(86400)
 
 
@@ -664,7 +619,7 @@ if __name__ == "__main__":
     print(f"  DXCC Club Log Monitor — {callsign_display}")
     print(f"  Modes: {ARGS.modes}  Freq: {ARGS.freq_min}-{ARGS.freq_max} kHz")
     print(f"  Alerta 24/7: entitats MAI treballades")
-    print(f"  Alerta diürna: entitats NO treballades el {ARGS.year} (7:00-23:00)")
+    print(f"  Alerta diürna: entitats NO treballades el {ARGS.year} (silenci {ARGS.silence_start}:00-{ARGS.silence_end}:00)")
     print(f"{'='*60}")
 
     if not ARGS.telegram_token:
@@ -678,18 +633,9 @@ if __name__ == "__main__":
     load_entity_codes()
     print(f"Entity codes: {len(entity_codes)}")
 
-    # Load ADIF 2026 (if provided)
-    if ARGS.adif:
-        load_adif_2026(os.path.abspath(ARGS.adif))
-
-    # Download Club Log chart
+    # Download Club Log chart (lifetime + per any)
     clublog_download_chart()
-
-    # Download fresh ADIF from eQSL (if credentials configured)
-    if ARGS.eqsl_user and ARGS.eqsl_pass:
-        download_adif_from_eqsl()
-        if ARGS.adif:
-            load_adif_2026(os.path.abspath(ARGS.adif))
+    clublog_load_year_chart(ARGS.year)
 
     rebuild_worked_sets()
 
@@ -700,9 +646,8 @@ if __name__ == "__main__":
     t_cty = threading.Thread(target=cty_refresh_loop, daemon=True)
     t_cty.start()
 
-    if ARGS.eqsl_user and ARGS.eqsl_pass:
-        t_adif = threading.Thread(target=adif_refresh_loop, daemon=True)
-        t_adif.start()
+    t_year = threading.Thread(target=year_chart_refresh_loop, daemon=True)
+    t_year.start()
 
     time.sleep(2)
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-dxcc_clublog_v2.py — DXCC Monitor via Club Log (sense eQSL/ADIF)
+dxcc_clublog_v2.1.py — DXCC Monitor via Club Log + eQSL
 Basat en dxcc_monitor.py (connexió cluster provada i funcional)
-Afegit: Club Log chart, two-tier alerting, entity codes.
+Afegit: Club Log chart, two-tier alerting, silence configurable.
 
 Usage:
     python3 dxcc_clublog_v2.py --callsign EB3AM --cluster-login EB3AM-9 \\
@@ -56,6 +56,11 @@ def parse_args():
                         help="Club Log password (for dxcc chart)")
     parser.add_argument("--adif", default=None,
                         help="Path to logbook.adi (for 2026 worked entities)")
+    # Silence hours (per defecte 23:00 - 07:00, fora d'aquest rang s'alerta)
+    parser.add_argument("--silence-start", type=int, default=23,
+                        help="Hour when silence starts (default: 23 = 23:00)")
+    parser.add_argument("--silence-end", type=int, default=7,
+                        help="Hour when silence ends (default: 7 = 07:00)")
     # Connections
     parser.add_argument("--telegram-token", default=None,
                         help="Telegram Bot API token")
@@ -88,14 +93,20 @@ ADIF_FILE = None  # es resol en main()
 # ===================== QUIET HOURS =====================
 
 def is_daytime():
-    """Returns True during 00:00-07:00 local time (silence 00:00-07:00)."""
+    """Returns True durant les hores d'alerta (fora de silenci).
+    Per defecte alerta de 07:00 a 23:00, silenci de 23:00 a 07:00.
+    Configurable amb --silence-start i --silence-end."""
     now = datetime.now()
     current = now.hour * 60 + now.minute
-    end = 7 * 60      # 07:00
-    start = 0 * 60      # 00:00
-    if start <= current < end:
-        return True
-    return False
+    start = ARGS.silence_start * 60
+    end = ARGS.silence_end * 60
+    # Si silence_start > silence_end (ex: 23->7), creua mitjanit
+    if start < end:
+        # rang dins del mateix dia (ex: 0-7, alerta 7-0)
+        return start <= current < end
+    else:
+        # rang creua mitjanit (ex: 23-7, silenci nocturn)
+        return current >= start or current < end
 
 # ===================== INIT =====================
 
@@ -664,7 +675,7 @@ if __name__ == "__main__":
     print(f"  DXCC Club Log Monitor — {callsign_display}")
     print(f"  Modes: {ARGS.modes}  Freq: {ARGS.freq_min}-{ARGS.freq_max} kHz")
     print(f"  Alerta 24/7: entitats MAI treballades")
-    print(f"  Alerta diürna: entitats NO treballades el {ARGS.year} (7:00-23:00)")
+    print(f"  Alerta diürna: entitats NO treballades el {ARGS.year} (silenci {ARGS.silence_start}:00-{ARGS.silence_end}:00)")
     print(f"{'='*60}")
 
     if not ARGS.telegram_token:

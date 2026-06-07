@@ -395,7 +395,7 @@ def send_telegram(msg):
     try:
         requests.post(
             f"https://api.telegram.org/bot{ARGS.telegram_token}/sendMessage",
-            json={"chat_id": ARGS.telegram_chat_id, "text": msg, "parse_mode": "Markdown"},
+            json={"chat_id": ARGS.telegram_chat_id, "text": msg, "parse_mode": "HTML"},
             timeout=5
         )
     except Exception as e:
@@ -518,7 +518,7 @@ def process_spot(line):
 
     mode_display = f" | {mode}" if mode != "UNKNOWN" else ""
     msg = (
-        f"{prefix} {dx_call} → {entity} (code {code})\n"
+        f"{prefix} <a href=\"https://www.qrz.com/db/{dx_call}\">{dx_call}</a> → {entity} (code {code})\n"
         f"📻 {freq} kHz{mode_display}\n"
         f"📢 {spotter}\n"
         f"{alert_type}{re_text}"
