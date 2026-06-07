@@ -362,7 +362,7 @@ def clublog_load_year_chart(year):
                 best = 0
                 for band, status in bands.items():
                     if status in (1, 2, 3, True):
-                        if status in (2, 3, True):
+                        if status in (2, 3):
                             best = max(best, 2)
                         elif best < 2:
                             best = 1
