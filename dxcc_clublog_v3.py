@@ -462,7 +462,7 @@ def process_spot(line):
 
     if not is_never:
         # Worked before, NOT in 2026 → daytime only
-        if not is_daytime():
+        if is_daytime():
             return
 
     # === ALERT ===
