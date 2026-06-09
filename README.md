@@ -81,6 +81,7 @@ python3 dxcc_clublog_v4.py \
 | `--clublog-password` | | `None` | Password de Club Log |
 | `--clublog-date` | | `3` | Date param pel chart anual (3=this year, 0=lifetime, 4=last 365d) |
 | `--clublog-mode` | | `0` | Mode param pel chart anual (0=all, 1=CW, 2=SSB, 3=digi) |
+| `--no-confirmed` | | `False` | Alertar també de treballades 2026 NO confirmades (flag) |
 | | | | |
 | **Telegram** | | | |
 | `--telegram-token` | | `None` | Token del bot Telegram |
@@ -293,6 +294,7 @@ python3 dxcc_clublog_v4.py \
 | `--clublog-password` | | `None` | Club Log password |
 | `--clublog-date` | | `3` | Date param for yearly chart (3=this year, 0=lifetime, 4=last 365d) |
 | `--clublog-mode` | | `0` | Mode param for yearly chart (0=all, 1=CW, 2=SSB, 3=digi) |
+| `--no-confirmed` | | `False` | Also alert on 2026 worked but not confirmed entities (flag) |
 | | | | |
 | **Telegram** | | | |
 | `--telegram-token` | | `None` | Telegram Bot API token |
