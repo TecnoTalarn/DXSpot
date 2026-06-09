@@ -511,7 +511,7 @@ def process_spot(line):
             return  # Hora de silenci
     else:
         # Opció 3: Treballat 2026 NO confirmat
-        if not ARGS.no_confirmed_only:
+        if not ARGS.no_confirmed:
             return  # Flag OFF, no avisem
         if is_daytime():
             return  # Hora de silenci
@@ -548,7 +548,7 @@ def process_spot(line):
         prefix = "🌅"
     else:
         # Treballat 2026 NO confirmat
-        if ARGS.no_confirmed_only:
+        if ARGS.no_confirmed:
             alert_type = f"💤 NO CONFIRMAT el {FILTER_YEAR}"
             prefix = "🌅"
         else:
@@ -676,7 +676,7 @@ if __name__ == "__main__":
     print(f"  DXCC Club Log Monitor — {callsign_display}")
     print(f"  Modes: {ARGS.modes}  Freq: {ARGS.freq_min}-{ARGS.freq_max} kHz")
     print(f"  Alerta 24/7: entitats MAI treballades")
-    if ARGS.no_confirmed_only:
+    if ARGS.no_confirmed:
         print(f"  Alerta horari: treballades {FILTER_YEAR} NO confirmades")
     else:
         print(f"  Alerta horari: NO treballades el {FILTER_YEAR} (treballades anys ant.)")

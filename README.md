@@ -97,7 +97,7 @@ python3 dxcc_clublog_v4.py \
 
 El sistema compara cada spot amb tres fonts (Club Log lifetime chart + Club Log any actual treballat + Club Log any actual confirmat):
 
-| Nivell | Condició | Sense `--no-confirmed-only` | Amb `--no-confirmed-only` |
+| Nivell | Condició | Sense `--no-confirmed` | Amb `--no-confirmed` |
 |--------|----------|:---:|:---:|
 | 🚨 **Mai treballada** | No és al teu Club Log Chart (lifetime) | **24/7** | **24/7** |
 | 🌅 **NO a l'any** | Treballada abans però no aquest any | **⏰ horari** | **⏰ horari** |
