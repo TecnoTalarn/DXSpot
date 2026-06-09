@@ -12,7 +12,7 @@ Monitoritza spots en temps real des d'un DX Cluster, compara'ls amb el teu DXCC 
 
 - **Monitor en temps real** — connexió Telnet persistent al teu DX Cluster preferit
 - **Integració Club Log (lifetime)** — baixa el teu DXCC Chart per saber quines entitats has treballat mai
-- **Integració Club Log (any actual)** — baixa el chart de l'any en curs (`date=3`) per saber quines entitats has treballat aquest any
+- **Integració Club Log (any actual)** — baixa el chart de l'any en curs (`date=4`) per saber quines entitats has treballat i confirmat aquest any
 - **Sense dependències ADIF/eQSL** — no cal descarregar ADIF, no cal eQSL
 - **Detecció de mode** — detecta automàticament FT8, FT4, CW, SSB, RTTY, amb fallback per freqüència
 - **Alertes Telegram** — notificacions configurables amb dos nivells:
@@ -79,6 +79,8 @@ python3 dxcc_clublog_v4.py \
 | `--clublog-api-key` | | `None` | API Key de Club Log |
 | `--clublog-email` | | `None` | Email de Club Log |
 | `--clublog-password` | | `None` | Password de Club Log |
+| `--clublog-date` | | `3` | Date param pel chart anual (3=this year, 0=lifetime, 4=last 365d) |
+| `--clublog-mode` | | `0` | Mode param pel chart anual (0=all, 1=CW, 2=SSB, 3=digi) |
 | | | | |
 | **Telegram** | | | |
 | `--telegram-token` | | `None` | Token del bot Telegram |
@@ -229,7 +231,7 @@ Real-time DXCC entity monitor via Telnet DX Cluster + Club Log integration. Conn
 
 - **Real-time monitoring** — persistent Telnet connection to your preferred DX Cluster
 - **Club Log lifetime chart** — downloads your DXCC Chart once per day to track never-worked entities
-- **Club Log current year chart** — downloads `date=3` chart to track this year's worked entities
+- **Club Log current year chart** — downloads `date=4` chart to track this year's worked and confirmed entities
 - **No ADIF/eQSL required** — no ADIF downloads, no eQSL credentials needed
 - **Mode detection** — auto-detects FT8, FT4, CW, SSB, RTTY from spot comments, with frequency-based fallback
 - **Telegram alerts** — two-tier notification system:
@@ -289,6 +291,8 @@ python3 dxcc_clublog_v4.py \
 | `--clublog-api-key` | | `None` | Club Log API Key |
 | `--clublog-email` | | `None` | Club Log email |
 | `--clublog-password` | | `None` | Club Log password |
+| `--clublog-date` | | `3` | Date param for yearly chart (3=this year, 0=lifetime, 4=last 365d) |
+| `--clublog-mode` | | `0` | Mode param for yearly chart (0=all, 1=CW, 2=SSB, 3=digi) |
 | | | | |
 | **Telegram** | | | |
 | `--telegram-token` | | `None` | Telegram Bot API token |

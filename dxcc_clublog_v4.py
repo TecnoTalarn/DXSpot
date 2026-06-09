@@ -2,14 +2,14 @@
 """
 dxcc_clublog_v4.py — DXCC Monitor via Club Log (sense eQSL)
 Basat en dxcc_monitor.py (connexió cluster provada i funcional)
-Afegit: Club Log chart per any (date=3), sense dependència d'eQSL/ADIF.
+Afegit: Club Log chart per any (date=4), sense dependència d'eQSL/ADIF.
 Afegit: Flag --no-confirmed-only per triar avisos d'horari (default OFF, com v3)
 
 Usage:
     python3 dxcc_clublog_v2.py --callsign EB3AM --cluster-login EB3AM-9 \\
         --clublog-api-key KEY --clublog-email EMAIL --clublog-password PASS \\
         --telegram-token TOKEN --telegram-chat-id ID
-    (Nota: sense --adif ni --eqsl, es fa servir ClubLog date=3)
+    (Nota: sense --adif ni --eqsl, es fa servir ClubLog date=4)
 """
 
 import socket
@@ -52,7 +52,11 @@ def parse_args():
                         help="Club Log email (for dxcc chart)")
     parser.add_argument("--clublog-password", default=None,
                         help="Club Log password (for dxcc chart)")
-    # --adif i --eqsl eliminats, es fa servir ClubLog date=3
+    # --adif i --eqsl eliminats, es fa servir ClubLog date=4
+    parser.add_argument("--clublog-date", type=int, default=3,
+                        help="Club Log chart date param per clublog_load_year_chart() (default: 3 = this year; 0 = lifetime; 4 = last 365 days)")
+    parser.add_argument("--clublog-mode", type=int, default=0,
+                        help="Club Log chart mode param per clublog_load_year_chart() (default: 0 = all modes; 1 = CW; 2 = SSB; 3 = digi)")
     parser.add_argument("--no-confirmed-only", action="store_true", default=False,
                         help="Alertar NOMES treballats 2026 NO confirmats (exclou no treballats 2026). "
                              "Per defecte OFF: alerta per NO treballats el 2026 (comportament v3).")
@@ -116,7 +120,7 @@ SPOT_RE = re.compile(r"^DX\s+de\s+(\S+):\s+([0-9.]+)\s+([A-Z0-9/]+)(.*)", re.IGN
 
 # Worked sets
 worked_chart_codes = set()    # set of DXCC entity codes (lifetime, from Club Log)
-worked_2026_codes = set()     # set of DXCC entity codes treballats (2026, from ClubLog date=3)
+worked_2026_codes = set()     # set of DXCC entity codes treballats (2026, from ClubLog date=4)
 confirmed_2026_codes = set()  # set of DXCC entity codes CONFIRMATS (2026, status 2/3)
 FILTER_YEAR = "2026"          # Any de referència per al filtre
 UNMATCHED_WORKED_NAMES = set()  # entity names no resolts (per compatibilitat)
@@ -336,7 +340,7 @@ def clublog_lookup_api(call):
 # ===================== CLUBLOG YEAR CHART =====================
 
 def clublog_load_year_chart(year):
-    """Descarrega el DXCC chart de ClubLog per any (date=3 = this year).
+    """Descarrega el DXCC chart de ClubLog per any (date=4 = this year, inclou confirmacions).
     Omple worked_2026_codes i confirmed_2026_codes."""
     global worked_2026_codes, confirmed_2026_codes
     if not ARGS.clublog_email or not ARGS.clublog_password or not ARGS.clublog_api_key:
@@ -348,8 +352,8 @@ def clublog_load_year_chart(year):
         "api": ARGS.clublog_api_key,
         "email": ARGS.clublog_email,
         "password": ARGS.clublog_password,
-        "mode": 0,
-        "date": 3,  # 3 = this year
+        "mode": ARGS.clublog_mode,
+        "date": ARGS.clublog_date,
     }
     try:
         r = requests.get(url, params=params, timeout=30)
