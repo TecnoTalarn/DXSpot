@@ -41,7 +41,9 @@ def parse_args():
     parser.add_argument("--year", "-y", default=current_yr,
                         help=f"Year to filter (default: {current_yr})")
     parser.add_argument("--clublog-mode", type=int, default=0,
-                        help="Mode per chart i alertes (0=tots, 1=CW, 2=SSB, 3=digi). Default: 0")
+                        help="Mode per chart confirmacions (0=tots, 1=CW, 2=SSB, 3=digi). Default: 0")
+    parser.add_argument("--modes", "-m", default="ALL",
+                        help="Comma-separated modes to filter spots or ALL (default: ALL)")
     parser.add_argument("--freq-min", type=float, default=3000,
                         help="Min frequency in kHz (default: 3000 ~80m)")
     parser.add_argument("--freq-max", type=float, default=55000,
@@ -505,6 +507,10 @@ def process_spot(line):
     if freq < ARGS.freq_min or freq > ARGS.freq_max:
         return
 
+    # Mode filter (ALL = all modes)
+    if ARGS.modes != "ALL" and mode not in set(m.strip() for m in ARGS.modes.split(",")):
+        return
+
     entity = lookup_entity(dx_call)
 
     # Resolve to DXCC code
@@ -704,8 +710,7 @@ if __name__ == "__main__":
     callsign_display = ARGS.callsign.upper()
     print(f"{'='*60}")
     print(f"  DXCC Club Log Monitor — {callsign_display}")
-    mode_label = {0: "TOTS", 1: "CW", 2: "SSB", 3: "DIGI"}.get(ARGS.clublog_mode, str(ARGS.clublog_mode))
-    print(f"  Mode: {mode_label}  Freq: {ARGS.freq_min}-{ARGS.freq_max} kHz")
+    print(f"  Modes: {ARGS.modes}  Freq: {ARGS.freq_min}-{ARGS.freq_max} kHz")
     print(f"  Alerta 24/7: entitats MAI treballades")
     if ARGS.no_confirmed:
         print(f"  Alerta horari: treballades {FILTER_YEAR} NO confirmades")
