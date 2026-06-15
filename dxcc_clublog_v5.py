@@ -41,7 +41,9 @@ def parse_args():
     parser.add_argument("--year", "-y", default=current_yr,
                         help=f"Year to filter (default: {current_yr})")
     parser.add_argument("--clublog-mode", type=int, default=0,
-                        help="Mode per chart i filtre d'spots (0=tots, 1=CW, 2=SSB, 3=digi). Default: 0")
+                        help="Mode per chart Club Log (0=tots, 1=CW, 2=SSB, 3=digi). Default: 0")
+    parser.add_argument("--modes", "-m", default="ALL",
+                        help="Comma-separated modes to filter spots or ALL (default: ALL)")
     parser.add_argument("--freq-min", type=float, default=3000,
                         help="Min frequency in kHz (default: 3000 ~80m)")
     parser.add_argument("--freq-max", type=float, default=55000,
@@ -340,7 +342,8 @@ def clublog_lookup_api(call):
 
 def clublog_load_year_chart(year):
     """Descarrega el DXCC chart de ClubLog per any.
-    Omple worked_2026_codes i confirmed_2026_codes (ambdós amb el mode seleccionat)."""
+    Omple worked_2026_codes i confirmed_2026_codes (sempre mode=0 = tots els modes).
+    --clublog-mode es fa servir per al chart lifetime (worked_chart_codes)."""
     global worked_2026_codes, confirmed_2026_codes
     if not ARGS.clublog_email or not ARGS.clublog_password or not ARGS.clublog_api_key:
         print("Club Log credentials not configured")
@@ -351,7 +354,7 @@ def clublog_load_year_chart(year):
         "api": ARGS.clublog_api_key,
         "email": ARGS.clublog_email,
         "password": ARGS.clublog_password,
-        "mode": ARGS.clublog_mode,
+        "mode": 0,  # Sempre mode=0 per treballades i confirmades globals
         "date": ARGS.clublog_date,
     }
     try:
@@ -381,7 +384,7 @@ def clublog_load_year_chart(year):
                         pass
         worked_2026_codes = worked
         confirmed_2026_codes = confirmed
-        print(f"📡 Club Log chart {year}: {len(worked)} treballades, {len(confirmed)} confirmades (mode={ARGS.clublog_mode})")
+        print(f"📡 Club Log chart {year}: {len(worked)} treballades, {len(confirmed)} confirmades (mode=0)")
     except Exception as e:
         print(f"Club Log chart error ({year}): {e}")
 
@@ -476,24 +479,16 @@ def process_spot(line):
     if freq < ARGS.freq_min or freq > ARGS.freq_max:
         return
 
+    # Mode filter (ALL = all modes)
+    if ARGS.modes != "ALL" and mode not in set(m.strip() for m in ARGS.modes.split(",")):
+        return
+
     entity = lookup_entity(dx_call)
 
-    # Resolve to DXCC code (primer, per saber si és mai treballat)
+    # Resolve to DXCC code
     code = entity_to_code(entity)
     if not code:
         code = clublog_lookup_api(dx_call)
-    
-    # Mode filter: si clublog_mode != 0, filtrem spots per mode
-    # EXCEPTE si és "mai treballat" (alerta 24/7 qualsevol mode)
-    if ARGS.clublog_mode != 0 and code:
-        mode_map = {1: "CW", 2: "SSB", 3: "FT8"}
-        expected_mode = mode_map.get(ARGS.clublog_mode)
-        if expected_mode and mode != expected_mode:
-            if code not in worked_chart_codes:
-                pass  # Mai treballat, alerta igual
-            else:
-                return
-    
     if not code:
         print(f"⚠️ No s'ha pogut resoldre {dx_call} → {entity} (sense codi DXCC)")
         return
@@ -680,8 +675,7 @@ if __name__ == "__main__":
     callsign_display = ARGS.callsign.upper()
     print(f"{'='*60}")
     print(f"  DXCC Club Log Monitor — {callsign_display}")
-    mode_name = {0: "TOTS", 1: "CW", 2: "SSB", 3: "DIGI"}.get(ARGS.clublog_mode, str(ARGS.clublog_mode))
-    print(f"  Mode: {mode_name}  Freq: {ARGS.freq_min}-{ARGS.freq_max} kHz")
+    print(f"  Modes: {ARGS.modes}  Freq: {ARGS.freq_min}-{ARGS.freq_max} kHz")
     print(f"  Alerta 24/7: entitats MAI treballades")
     if ARGS.no_confirmed:
         print(f"  Alerta horari: treballades {FILTER_YEAR} NO confirmades")
