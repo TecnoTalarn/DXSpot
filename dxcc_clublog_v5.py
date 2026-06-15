@@ -339,22 +339,23 @@ def clublog_lookup_api(call):
 # ===================== CLUBLOG YEAR CHART =====================
 
 def clublog_load_year_chart(year):
-    """Descarrega el DXCC chart de ClubLog per any (date=4 = this year, inclou confirmacions).
-    Omple worked_2026_codes i confirmed_2026_codes."""
+    """Descarrega el DXCC chart de ClubLog per any.
+    Omple worked_2026_codes (amb el mode seleccionat) i confirmed_2026_codes (mode=0 = tots els modes)."""
     global worked_2026_codes, confirmed_2026_codes
     if not ARGS.clublog_email or not ARGS.clublog_password or not ARGS.clublog_api_key:
         print("Club Log credentials not configured")
         return
     url = "https://clublog.org/json_dxccchart.php"
-    params = {
-        "call": ARGS.callsign,
-        "api": ARGS.clublog_api_key,
-        "email": ARGS.clublog_email,
-        "password": ARGS.clublog_password,
-        "mode": ARGS.clublog_mode,
-        "date": ARGS.clublog_date,
-    }
-    try:
+    
+    def fetch_chart(mode, label):
+        params = {
+            "call": ARGS.callsign,
+            "api": ARGS.clublog_api_key,
+            "email": ARGS.clublog_email,
+            "password": ARGS.clublog_password,
+            "mode": mode,
+            "date": ARGS.clublog_date,
+        }
         r = requests.get(url, params=params, timeout=30)
         r.raise_for_status()
         data = r.json()
@@ -379,11 +380,17 @@ def clublog_load_year_chart(year):
                         confirmed.add(str(int(code_str)))
                     except ValueError:
                         pass
-        worked_2026_codes = worked
-        confirmed_2026_codes = confirmed
-        print(f"📡 Club Log chart {year}: {len(worked)} treballades, {len(confirmed)} confirmades")
-    except Exception as e:
-        print(f"Club Log chart error ({year}): {e}")
+        print(f"  {label}: {len(worked)} treballades, {len(confirmed)} confirmades")
+        return worked, confirmed
+    
+    # Chart amb el mode seleccionat (per treballades)
+    worked, _ = fetch_chart(ARGS.clublog_mode, f"Chart mode={ARGS.clublog_mode}")
+    # Chart amb mode=0 (tots els modes) per confirmacions globals
+    _, confirmed_all = fetch_chart(0, "Chart mode=0 (confirmacions globals)")
+    
+    worked_2026_codes = worked
+    confirmed_2026_codes = confirmed_all
+    print(f"📡 Club Log chart {year}: {len(worked)} treballades (mode={ARGS.clublog_mode}), {len(confirmed_all)} confirmades (tots modes)")
 
 
 # ===================== MODE GUESSING =====================
