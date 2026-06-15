@@ -3,7 +3,7 @@
 dxcc_clublog_v4.py — DXCC Monitor via Club Log (sense eQSL)
 Basat en dxcc_monitor.py (connexió cluster provada i funcional)
 Afegit: Club Log chart per any (date=4), sense dependència d'eQSL/ADIF.
-Afegit: Flag --no-confirmed-only per triar avisos d'horari (default OFF, com v3)
+Afegit: Flag --no-confirmed per triar avisos d'horari (default OFF, com v3)
 
 Usage:
     python3 dxcc_clublog_v2.py --callsign EB3AM --cluster-login EB3AM-9 \\
@@ -57,7 +57,7 @@ def parse_args():
                         help="Club Log chart date param per clublog_load_year_chart() (default: 3 = this year; 0 = lifetime; 4 = last 365 days)")
     parser.add_argument("--clublog-mode", type=int, default=0,
                         help="Club Log chart mode param per clublog_load_year_chart() (default: 0 = all modes; 1 = CW; 2 = SSB; 3 = digi)")
-    parser.add_argument("--no-confirmed-only", action="store_true", default=False,
+    parser.add_argument("--no-confirmed", action="store_true", default=False,
                         help="Alertar NOMES treballats 2026 NO confirmats (exclou no treballats 2026). "
                              "Per defecte OFF: alerta per NO treballats el 2026 (comportament v3).")
     # Silence hours (per defecte 23:00 - 07:00, fora d'aquest rang s'alerta)
