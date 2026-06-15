@@ -478,29 +478,25 @@ def process_spot(line):
 
     entity = lookup_entity(dx_call)
 
+    # Resolve to DXCC code (primer, per saber si és mai treballat)
+    code = entity_to_code(entity)
+    if not code:
+        code = clublog_lookup_api(dx_call)
+    
     # Mode filter: si clublog_mode != 0, filtrem spots per mode
-    # EXCEPTE si és "mai treballat" (que alerta 24/7 qualsevol mode)
-    if ARGS.clublog_mode != 0:
+    # EXCEPTE si és "mai treballat" (alerta 24/7 qualsevol mode)
+    if ARGS.clublog_mode != 0 and code:
         mode_map = {1: "CW", 2: "SSB", 3: "FT8"}
         expected_mode = mode_map.get(ARGS.clublog_mode)
         if expected_mode and mode != expected_mode:
-            # Pot ser mai treballat? Ho comprovem abans de descartar
-            code = entity_to_code(entity)
-            if not code:
-                code = clublog_lookup_api(dx_call)
-            if code and code not in worked_chart_codes:
+            if code not in worked_chart_codes:
                 pass  # Mai treballat, alerta igual
             else:
                 return
-
-    # Resolve to DXCC code
-    code = entity_to_code(entity)
+    
     if not code:
-        # Fallback: Club Log API (rare)
-        code = clublog_lookup_api(dx_call)
-        if not code:
-            print(f"⚠️ No s'ha pogut resoldre {dx_call} → {entity} (sense codi DXCC)")
-            return
+        print(f"⚠️ No s'ha pogut resoldre {dx_call} → {entity} (sense codi DXCC)")
+        return
 
     # === FOUR-TIER ALERTING ===
     in_chart = code in worked_chart_codes      # Worked ever?
