@@ -483,13 +483,6 @@ def process_spot(line):
     if freq < ARGS.freq_min or freq > ARGS.freq_max:
         return
 
-    # Mode filter: si clublog_mode != 0, només processem spots del mode seleccionat
-    if ARGS.clublog_mode != 0:
-        mode_map = {1: "CW", 2: "SSB", 3: "FT8"}
-        expected_mode = mode_map.get(ARGS.clublog_mode)
-        if expected_mode and mode != expected_mode:
-            return
-
     entity = lookup_entity(dx_call)
 
     # Resolve to DXCC code
@@ -511,9 +504,20 @@ def process_spot(line):
 
     is_never = not in_chart  # Never worked ever
 
+    # Mode filter: per opcions 2 i 3, només processem spots del mode seleccionat
+    # Opció 1 (mai treballat) sempre alerta, independentment del mode
+    def mode_matches():
+        if ARGS.clublog_mode == 0:
+            return True
+        mode_map = {1: "CW", 2: "SSB", 3: "FT8"}
+        expected = mode_map.get(ARGS.clublog_mode)
+        return expected is None or mode == expected
+
     if is_never:
-        # Opció 1: Mai treballat → alerta 24/7
+        # Opció 1: Mai treballat → alerta 24/7 (qualsevol mode)
         pass  # alert below
+    elif not mode_matches():
+        return  # Mode no coincideix, ignorem
     elif not in_2026:
         # Opció 2: No treballat el 2026 (però treballat en anys anteriors)
         if is_daytime():
