@@ -15,14 +15,11 @@ Monitoritza spots en temps real des d'un DX Cluster, compara'ls amb el teu DXCC 
 - **Integració Club Log (any actual)** — baixa el chart de l'any en curs (`date=4`) per saber quines entitats has treballat i confirmat aquest any
 - **Sense dependències ADIF/eQSL** — no cal descarregar ADIF, no cal eQSL
 - **Detecció de mode** — detecta automàticament FT8, FT4, CW, SSB, RTTY, amb fallback per freqüència
-- **Alertes Telegram** — notificacions configurables amb dos nivells:
-  - 🚨 **Mai treballada** (24/7)
-  - 🌅 **NO treballada l'any en curs** (només en horari diürn)
-- **Alertes Telegram** — tres nivells:
+- **Alertes Telegram** — tres nivells configurables:
   - 🚨 **Mai treballada** (24/7)
   - 🌅 **NO treballada l'any en curs** (horari diürn)
-  - 💤 **NO confirmada l'any en curs** (horari diürn, només amb )
-- **** — flag opcional per activar alertes d'entitats treballades però encara no confirmades
+  - 💤 **NO confirmada l'any en curs** (horari diürn, només amb `--no-confirmed`)
+- **Flag `--no-confirmed`** — activa alertes d'entitats treballades però encara no confirmades l'any en curs
 - **Confirmades l'any en curs** — completament silenciades
 - **Deduplicació** — control de re-alertes amb interval configurable (2h per defecte)
 - **QSY detection** — si el mateix prefix apareix a una freqüència diferent, re-alerta amb "QSY! era X kHz"
@@ -81,7 +78,7 @@ python3 dxcc_clublog_v4.py \
 | `--clublog-password` | | `None` | Password de Club Log |
 | `--clublog-date` | | `3` | Date param pel chart anual (3=this year, 0=lifetime, 4=last 365d) |
 | `--clublog-mode` | | `0` | Mode param pel chart anual (0=all, 1=CW, 2=SSB, 3=digi) |
-| `--no-confirmed` | | `False` | Alertar també de treballades 2026 NO confirmades (flag) |
+| `--no-confirmed` | | `False` | Alertar també de treballades l'any en curs NO confirmades (flag) |
 | | | | |
 | **Telegram** | | | |
 | `--telegram-token` | | `None` | Token del bot Telegram |
@@ -294,7 +291,7 @@ python3 dxcc_clublog_v4.py \
 | `--clublog-password` | | `None` | Club Log password |
 | `--clublog-date` | | `3` | Date param for yearly chart (3=this year, 0=lifetime, 4=last 365d) |
 | `--clublog-mode` | | `0` | Mode param for yearly chart (0=all, 1=CW, 2=SSB, 3=digi) |
-| `--no-confirmed` | | `False` | Also alert on 2026 worked but not confirmed entities (flag) |
+| `--no-confirmed` | | `False` | Also alert on current year worked but not confirmed entities (flag) |
 | | | | |
 | **Telegram** | | | |
 | `--telegram-token` | | `None` | Telegram Bot API token |
