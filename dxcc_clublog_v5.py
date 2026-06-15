@@ -515,6 +515,12 @@ def process_spot(line):
         # Opció 3: Treballat 2026 NO confirmat en aquest mode
         if not ARGS.no_confirmed:
             return  # Flag OFF, no avisem
+        # Filtre de mode per opció 3: només alertar si l'spot es del mode seleccionat
+        if ARGS.clublog_mode != 0:
+            mode_map = {1: "CW", 2: "SSB", 3: "FT8"}
+            expected = mode_map.get(ARGS.clublog_mode)
+            if expected and mode != expected:
+                return  # Spot d'un altre mode, ignorar
         if is_daytime():
             return  # Hora de silenci
 
