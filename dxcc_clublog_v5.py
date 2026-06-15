@@ -402,11 +402,33 @@ def guess_mode(freq_khz, comment):
     if "CW" in c: return "CW"
     if "SSB" in c: return "SSB"
     if "RTTY" in c: return "RTTY"
+    # CW bands
     if 14000 <= freq_khz <= 14070: return "CW"
     if 21000 <= freq_khz <= 21070: return "CW"
     if 7000 <= freq_khz <= 7040: return "CW"
+    if 28000 <= freq_khz <= 28070: return "CW"
+    # FT8/FT4 frequencies
     if (7074 <= freq_khz <= 7076) or (14074 <= freq_khz <= 14076): return "FT8"
-    if 14100 <= freq_khz <= 14350: return "SSB"
+    if (21074 <= freq_khz <= 21076) or (28074 <= freq_khz <= 28076): return "FT8"
+    if 1840 <= freq_khz <= 1842: return "FT8"
+    if 3573 <= freq_khz <= 3575: return "FT8"
+    if 10136 <= freq_khz <= 10138: return "FT8"
+    if 18100 <= freq_khz <= 18102: return "FT8"
+    if 24915 <= freq_khz <= 24917: return "FT8"
+    if 50313 <= freq_khz <= 50315: return "FT8"
+    # SSB bands (all HF bands)
+    if 1843 <= freq_khz <= 2000: return "SSB"   # 160m
+    if 3600 <= freq_khz <= 3800: return "SSB"   # 80m
+    if 3900 <= freq_khz <= 4000: return "SSB"   # 75m
+    if 7100 <= freq_khz <= 7300: return "SSB"   # 40m
+    if 10100 <= freq_khz <= 10150: return "SSB"  # 30m
+    if 14150 <= freq_khz <= 14350: return "SSB"  # 20m
+    if 18150 <= freq_khz <= 18200: return "SSB"  # 17m (més ampli)
+    if 18100 <= freq_khz <= 18168: return "SSB"  # 17m (complet)
+    if 21070 <= freq_khz <= 21450: return "SSB"  # 15m
+    if 24930 <= freq_khz <= 24990: return "SSB"  # 12m
+    if 28400 <= freq_khz <= 29700: return "SSB"  # 10m
+    if 50000 <= freq_khz <= 51000: return "SSB"  # 6m
     return "UNKNOWN"
 
 
