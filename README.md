@@ -208,7 +208,8 @@ systemctl daemon-reload && systemctl enable --now dxspot
 ```
 DXSpot/
 ├── dxcc_clublog_v4.py      # Monitor principal (recomanat)
-├── dxcc_clublog_v3.bat     # Windows launcher
+├── dxcc_clublog_v4.bat     # Windows launcher v4
+├── dxcc_clublog_v3.bat     # Windows launcher v3
 ├── dxcc_clublog_v2.py      # Versió anterior (amb eQSL/ADIF)
 ├── dxcc_clublog_v2.bat     # Windows launcher v2
 ├── dxcc_clublog.py         # Versió encara anterior
@@ -364,6 +365,7 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.yourcall.dxspot.plis
 ```
 DXSpot/
 ├── dxcc_clublog_v4.py      # Main monitor (recommended)
+├── dxcc_clublog_v4.bat     # Windows launcher v4
 ├── dxcc_clublog_v3.bat     # Windows launcher v3
 ├── dxcc_clublog_v2.py      # Previous version (with eQSL/ADIF)
 ├── dxcc_clublog_v2.bat     # Windows launcher v2
