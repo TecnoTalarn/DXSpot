@@ -340,22 +340,21 @@ def clublog_lookup_api(call):
 
 def clublog_load_year_chart(year):
     """Descarrega el DXCC chart de ClubLog per any.
-    Omple worked_2026_codes (amb el mode seleccionat) i confirmed_2026_codes (mode=0 = tots els modes)."""
+    Omple worked_2026_codes i confirmed_2026_codes (ambdós amb el mode seleccionat)."""
     global worked_2026_codes, confirmed_2026_codes
     if not ARGS.clublog_email or not ARGS.clublog_password or not ARGS.clublog_api_key:
         print("Club Log credentials not configured")
         return
     url = "https://clublog.org/json_dxccchart.php"
-    
-    def fetch_chart(mode, label):
-        params = {
-            "call": ARGS.callsign,
-            "api": ARGS.clublog_api_key,
-            "email": ARGS.clublog_email,
-            "password": ARGS.clublog_password,
-            "mode": mode,
-            "date": ARGS.clublog_date,
-        }
+    params = {
+        "call": ARGS.callsign,
+        "api": ARGS.clublog_api_key,
+        "email": ARGS.clublog_email,
+        "password": ARGS.clublog_password,
+        "mode": ARGS.clublog_mode,
+        "date": ARGS.clublog_date,
+    }
+    try:
         r = requests.get(url, params=params, timeout=30)
         r.raise_for_status()
         data = r.json()
@@ -380,17 +379,11 @@ def clublog_load_year_chart(year):
                         confirmed.add(str(int(code_str)))
                     except ValueError:
                         pass
-        print(f"  {label}: {len(worked)} treballades, {len(confirmed)} confirmades")
-        return worked, confirmed
-    
-    # Chart amb el mode seleccionat (per treballades)
-    worked, _ = fetch_chart(ARGS.clublog_mode, f"Chart mode={ARGS.clublog_mode}")
-    # Chart amb mode=0 (tots els modes) per confirmacions globals
-    _, confirmed_all = fetch_chart(0, "Chart mode=0 (confirmacions globals)")
-    
-    worked_2026_codes = worked
-    confirmed_2026_codes = confirmed_all
-    print(f"📡 Club Log chart {year}: {len(worked)} treballades (mode={ARGS.clublog_mode}), {len(confirmed_all)} confirmades (tots modes)")
+        worked_2026_codes = worked
+        confirmed_2026_codes = confirmed
+        print(f"📡 Club Log chart {year}: {len(worked)} treballades, {len(confirmed)} confirmades (mode={ARGS.clublog_mode})")
+    except Exception as e:
+        print(f"Club Log chart error ({year}): {e}")
 
 
 # ===================== MODE GUESSING =====================
@@ -485,6 +478,21 @@ def process_spot(line):
 
     entity = lookup_entity(dx_call)
 
+    # Mode filter: si clublog_mode != 0, filtrem spots per mode
+    # EXCEPTE si és "mai treballat" (que alerta 24/7 qualsevol mode)
+    if ARGS.clublog_mode != 0:
+        mode_map = {1: "CW", 2: "SSB", 3: "FT8"}
+        expected_mode = mode_map.get(ARGS.clublog_mode)
+        if expected_mode and mode != expected_mode:
+            # Pot ser mai treballat? Ho comprovem abans de descartar
+            code = entity_to_code(entity)
+            if not code:
+                code = clublog_lookup_api(dx_call)
+            if code and code not in worked_chart_codes:
+                pass  # Mai treballat, alerta igual
+            else:
+                return
+
     # Resolve to DXCC code
     code = entity_to_code(entity)
     if not code:
@@ -504,20 +512,9 @@ def process_spot(line):
 
     is_never = not in_chart  # Never worked ever
 
-    # Mode filter: per opcions 2 i 3, només processem spots del mode seleccionat
-    # Opció 1 (mai treballat) sempre alerta, independentment del mode
-    def mode_matches():
-        if ARGS.clublog_mode == 0:
-            return True
-        mode_map = {1: "CW", 2: "SSB", 3: "FT8"}
-        expected = mode_map.get(ARGS.clublog_mode)
-        return expected is None or mode == expected
-
     if is_never:
         # Opció 1: Mai treballat → alerta 24/7 (qualsevol mode)
         pass  # alert below
-    elif not mode_matches():
-        return  # Mode no coincideix, ignorem
     elif not in_2026:
         # Opció 2: No treballat el 2026 (però treballat en anys anteriors)
         if is_daytime():
